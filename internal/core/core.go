@@ -317,16 +317,17 @@ func (p *Core) createResources(initial bool) error {
 	if p.conf.Playback &&
 		p.playbackServer == nil {
 		i := &playback.Server{
-			Address:        p.conf.PlaybackAddress,
-			Encryption:     p.conf.PlaybackEncryption,
-			ServerKey:      p.conf.PlaybackServerKey,
-			ServerCert:     p.conf.PlaybackServerCert,
-			AllowOrigin:    p.conf.PlaybackAllowOrigin,
-			TrustedProxies: p.conf.PlaybackTrustedProxies,
-			ReadTimeout:    p.conf.ReadTimeout,
-			PathConfs:      p.conf.Paths,
-			AuthManager:    p.authManager,
-			Parent:         p,
+			Address:                    p.conf.PlaybackAddress,
+			Encryption:                 p.conf.PlaybackEncryption,
+			ServerKey:                  p.conf.PlaybackServerKey,
+			ServerCert:                 p.conf.PlaybackServerCert,
+			AllowOrigin:                p.conf.PlaybackAllowOrigin,
+			TrustedProxies:             p.conf.PlaybackTrustedProxies,
+			SegmentAlwaysConcatenation: p.conf.PlaybackSegmentAlwaysConcatenation,
+			ReadTimeout:                p.conf.ReadTimeout,
+			PathConfs:                  p.conf.Paths,
+			AuthManager:                p.authManager,
+			Parent:                     p,
 		}
 		err = i.Initialize()
 		if err != nil {
@@ -686,6 +687,7 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		newConf.PlaybackServerCert != p.conf.PlaybackServerCert ||
 		newConf.PlaybackAllowOrigin != p.conf.PlaybackAllowOrigin ||
 		!reflect.DeepEqual(newConf.PlaybackTrustedProxies, p.conf.PlaybackTrustedProxies) ||
+		newConf.PlaybackSegmentAlwaysConcatenation != p.conf.PlaybackSegmentAlwaysConcatenation ||
 		newConf.ReadTimeout != p.conf.ReadTimeout ||
 		closeAuthManager ||
 		closeLogger

@@ -21,16 +21,17 @@ type serverAuthManager interface {
 
 // Server is the playback server.
 type Server struct {
-	Address        string
-	Encryption     bool
-	ServerKey      string
-	ServerCert     string
-	AllowOrigin    string
-	TrustedProxies conf.IPNetworks
-	ReadTimeout    conf.StringDuration
-	PathConfs      map[string]*conf.Path
-	AuthManager    serverAuthManager
-	Parent         logger.Writer
+	Address                    string
+	Encryption                 bool
+	ServerKey                  string
+	ServerCert                 string
+	AllowOrigin                string
+	TrustedProxies             conf.IPNetworks
+	ReadTimeout                conf.StringDuration
+	PathConfs                  map[string]*conf.Path
+	AuthManager                serverAuthManager
+	SegmentAlwaysConcatenation bool
+	Parent                     logger.Writer
 
 	httpServer *httpp.Server
 	mutex      sync.RWMutex

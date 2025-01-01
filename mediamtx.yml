@@ -215,6 +215,8 @@ playbackAllowOrigin: '*'
 # If the server receives a request from one of these entries, IP in logs
 # will be taken from the X-Forwarded-For header.
 playbackTrustedProxies: []
+# Whether playback segments always concatenation
+playbackSegmentAlwaysConcatenation: no
 
 ###############################################
 # Global settings -> RTSP server

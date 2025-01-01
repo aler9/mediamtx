@@ -54,10 +54,12 @@ func segmentFMP4CanBeConcatenated(
 	prevEnd time.Time,
 	curInit *fmp4.Init,
 	curStart time.Time,
+	alwaysConcatenation bool,
 ) bool {
 	return reflect.DeepEqual(prevInit, curInit) &&
-		!curStart.Before(prevEnd.Add(-concatenationTolerance)) &&
-		!curStart.After(prevEnd.Add(concatenationTolerance))
+		(alwaysConcatenation ||
+			(!curStart.Before(prevEnd.Add(-concatenationTolerance)) &&
+				!curStart.After(prevEnd.Add(concatenationTolerance))))
 }
 
 func segmentFMP4ReadInit(r io.ReadSeeker) (*fmp4.Init, error) {

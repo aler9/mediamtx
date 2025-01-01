@@ -64,7 +64,8 @@ func computeDurationAndConcatenate(
 					prevInit,
 					out[len(out)-1].Start.Add(time.Duration(out[len(out)-1].Duration)),
 					init,
-					seg.Start) {
+					seg.Start,
+					false) {
 					prevStart := out[len(out)-1].Start
 					curEnd := seg.Start.Add(maxDuration)
 					out[len(out)-1].Duration = listEntryDuration(curEnd.Sub(prevStart))

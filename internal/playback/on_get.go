@@ -46,6 +46,7 @@ func seekAndMux(
 	start time.Time,
 	duration time.Duration,
 	m muxer,
+	alwaysConcatenation bool,
 ) error {
 	if recordFormat == conf.RecordFormatFMP4 {
 		var firstInit *fmp4.Init
@@ -86,7 +87,7 @@ func seekAndMux(
 				return err
 			}
 
-			if !segmentFMP4CanBeConcatenated(firstInit, segmentEnd, init, seg.Start) {
+			if !segmentFMP4CanBeConcatenated(firstInit, segmentEnd, init, seg.Start, alwaysConcatenation) {
 				break
 			}
 
@@ -163,7 +164,7 @@ func (s *Server) onGet(ctx *gin.Context) {
 		return
 	}
 
-	err = seekAndMux(pathConf.RecordFormat, segments, start, duration, m)
+	err = seekAndMux(pathConf.RecordFormat, segments, start, duration, m, s.SegmentAlwaysConcatenation)
 	if err != nil {
 		// user aborted the download
 		var neterr *net.OpError

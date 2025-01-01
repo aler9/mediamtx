@@ -207,13 +207,14 @@ type Conf struct {
 	PPROFTrustedProxies IPNetworks `json:"pprofTrustedProxies"`
 
 	// Playback
-	Playback               bool       `json:"playback"`
-	PlaybackAddress        string     `json:"playbackAddress"`
-	PlaybackEncryption     bool       `json:"playbackEncryption"`
-	PlaybackServerKey      string     `json:"playbackServerKey"`
-	PlaybackServerCert     string     `json:"playbackServerCert"`
-	PlaybackAllowOrigin    string     `json:"playbackAllowOrigin"`
-	PlaybackTrustedProxies IPNetworks `json:"playbackTrustedProxies"`
+	Playback                           bool       `json:"playback"`
+	PlaybackAddress                    string     `json:"playbackAddress"`
+	PlaybackEncryption                 bool       `json:"playbackEncryption"`
+	PlaybackServerKey                  string     `json:"playbackServerKey"`
+	PlaybackServerCert                 string     `json:"playbackServerCert"`
+	PlaybackAllowOrigin                string     `json:"playbackAllowOrigin"`
+	PlaybackTrustedProxies             IPNetworks `json:"playbackTrustedProxies"`
+	PlaybackSegmentAlwaysConcatenation bool       `json:"playbackSegmentAlwaysConcatenation"`
 
 	// RTSP server
 	RTSP              bool             `json:"rtsp"`
@@ -353,6 +354,7 @@ func (conf *Conf) setDefaults() {
 	conf.PlaybackServerKey = "server.key"
 	conf.PlaybackServerCert = "server.crt"
 	conf.PlaybackAllowOrigin = "*"
+	conf.PlaybackSegmentAlwaysConcatenation = false
 
 	// RTSP server
 	conf.RTSP = true

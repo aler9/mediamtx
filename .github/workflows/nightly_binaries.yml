@@ -1,5 +1,5 @@
 # A reusable workflow that builds and archives binaries for multiple platforms.
-name: Build Binaries
+name: binaries
 
 on:
   workflow_call:

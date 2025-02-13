@@ -1,22 +1,187 @@
-name: nightly_binaries
+# A reusable workflow that builds and archives binaries for multiple platforms.
+name: Build Binaries
 
 on:
+  workflow_call:
+    inputs:
+      checksum:
+        description: Generate a SHA256 checksum for the archives
+        type: boolean
+        default: true
+
+      combine:
+        description: Create a `binaries` artifact containing all artifacts.
+        type: boolean
+        default: false
+
   workflow_dispatch:
+    inputs:
+      checksum:
+        description: Generate a SHA256 checksum for the archives
+        type: boolean
+        default: true
+
+      combine:
+        description: Create a `binaries` artifact containing all artifacts.
+        type: boolean
+        default: false
+
+  push:
+    branches:
+      - "*"
+    tags:
+      - "*"
+  pull_request:
+    branches:
+      - "*"
 
 jobs:
-  nightly_binaries:
-    runs-on: ubuntu-22.04
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      CGO_ENABLED: 0
+      BINARY_NAME: mediamtx
+
+    outputs:
+      combine: ${{ env.COMBINE }}
+
+    strategy:
+      matrix:
+        include:
+          - goos: windows
+            goarch: amd64
+            binary_extension: .exe
+            archive_suffix: windows_amd64.zip
+
+          - goos: windows
+            goarch: arm
+            binary_extension: .exe
+            archive_suffix: windows_arm.zip
+
+          - goos: windows
+            goarch: arm64
+            binary_extension: .exe
+            archive_suffix: windows_arm64.zip
+
+          - goos: linux
+            goarch: amd64
+            archive_suffix: linux_amd64.tar.gz
+
+          - goos: darwin
+            goarch: amd64
+            archive_suffix: darwin_amd64.tar.gz
+
+          - goos: darwin
+            goarch: arm64
+            archive_suffix: darwin_arm64.tar.gz
+
+          - goos: linux
+            goarch: arm
+            goarm: 6
+            archive_suffix: linux_armv6.tar.gz
+
+          - goos: linux
+            goarch: arm
+            goarm: 7
+            archive_suffix: linux_armv7.tar.gz
+
+          - goos: linux
+            goarch: arm64
+            goarm: 8
+            archive_suffix: linux_arm64v8.tar.gz
 
     steps:
+    - name: Set checksum environment variable
+      run: |
+        if [[ ! -z "${{ inputs.checksum }}" ]]; then
+          if [[ "${{ inputs.checksum }}" == "true" ]]; then
+            echo "CHECKSUM=1" >> $GITHUB_ENV
+          else
+            echo "CHECKSUM=0" >> $GITHUB_ENV
+          fi
+        else
+          # Check if the event is a push or pull request
+          if [ "${{ github.event_name }}" == "push" ] || [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "CHECKSUM=1" >> $GITHUB_ENV
+          else
+            echo "CHECKSUM=0" >> $GITHUB_ENV
+          fi
+        fi
+
     - uses: actions/checkout@v4
       with:
+        submodules: recursive
+        lfs: true
         fetch-depth: 0
+        fetch-tags: true
 
-    - run: make binaries
+    - name: Setup go
+      uses: actions/setup-go@v5
+      with:
+        go-version: 1.23
+
+    - name: Go module setup
+      run: go mod download
+
+    - name: Go generate
+      run: go generate ./...
+
+    - name: Get build info
+      id: info
+      run: |
+        VERSION="$(cat internal/core/VERSION)"
+
+        echo "version=${VERSION}" | tee -a $GITHUB_OUTPUT
+        echo "archive_name=${{ env.BINARY_NAME }}_${VERSION}_${{ matrix.archive_suffix}}" | tee -a $GITHUB_OUTPUT
+
+    - name: Go build
+      run: go build -o "build/${{ env.BINARY_NAME }}${{ matrix.binary_extension }}" .
       env:
-        CHECKSUM: '1'
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        GOARM: ${{ matrix.goarm }}
+
+    - name: Archive binary
+      run: |
+        mkdir -p build
+        cp mediamtx.yml LICENSE build/
+        cd build
+
+        if [[ "${{ matrix.archive_suffix }}" == *.tar.gz ]]; then
+          tar -czvf "${{ steps.info.outputs.archive_name }}" --owner=0 --group=0 *
+        else
+          zip "${{ steps.info.outputs.archive_name }}" *
+        fi
+
+        if [ "${{ env.CHECKSUM }}" == "1" ]; then
+          sha256sum "${{ steps.info.outputs.archive_name }}" > "${{ steps.info.outputs.archive_name }}.sha256sum"
+        fi
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm && format('v{0}', matrix.goarm) || '' }}
+        if-no-files-found: error
+        path: |
+          build/${{ steps.info.outputs.archive_name }}
+          build/${{ steps.info.outputs.archive_name }}.sha256sum
+
+  combine:
+    runs-on: ubuntu-latest
+    if: inputs.combine == true
+    needs: build
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        path: binaries
+
+    - name: Flatten directory structure
+      run: |
+        mkdir -p flat_binaries
+        find binaries -type f -exec mv {} flat_binaries/ \;
 
     - uses: actions/upload-artifact@v4
       with:
         name: binaries
-        path: binaries
+        path: flat_binaries/*

@@ -8,6 +8,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/bluenviron/mediamtx/internal/certloader"
@@ -61,10 +63,23 @@ func (s *Server) Initialize() error {
 		}
 	}
 
+	if strings.HasPrefix(s.Network, "tcp") {
+		var isunix bool
+		s.Address, isunix = strings.CutPrefix(s.Address, "unix://")
+		if isunix {
+			s.Network = "unix"
+			os.Remove(s.Address)
+		}
+	}
+
 	var err error
 	s.ln, err = net.Listen(s.Network, s.Address)
 	if err != nil {
 		return err
+	}
+
+	if s.Network == "unix" {
+		os.Chmod(s.Address, 0775)
 	}
 
 	h := s.Handler

@@ -130,6 +130,7 @@ func TestRecorder(t *testing.T) {
 				desc,
 				true,
 				test.NilLogger,
+				false,
 			)
 			require.NoError(t, err)
 			defer stream.Close()
@@ -343,6 +344,7 @@ func TestRecorderFMP4NegativeDTS(t *testing.T) {
 		desc,
 		true,
 		test.NilLogger,
+		false,
 	)
 	require.NoError(t, err)
 	defer stream.Close()
@@ -430,6 +432,7 @@ func TestRecorderSkipTracksPartial(t *testing.T) {
 				desc,
 				true,
 				test.NilLogger,
+				false,
 			)
 			require.NoError(t, err)
 			defer stream.Close()
@@ -490,6 +493,7 @@ func TestRecorderSkipTracksFull(t *testing.T) {
 				desc,
 				true,
 				test.NilLogger,
+				false,
 			)
 			require.NoError(t, err)
 			defer stream.Close()

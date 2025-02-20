@@ -38,6 +38,8 @@ type Stream struct {
 	streamReaders map[Reader]*streamReader
 
 	readerRunning chan struct{}
+
+	CachedUnits []unit.Unit
 }
 
 // New allocates a Stream.
@@ -47,6 +49,7 @@ func New(
 	desc *description.Session,
 	generateRTPPackets bool,
 	decodeErrLogger logger.Writer,
+	gopCache bool,
 ) (*Stream, error) {
 	s := &Stream{
 		writeQueueSize: writeQueueSize,
@@ -61,7 +64,7 @@ func New(
 
 	for _, media := range desc.Medias {
 		var err error
-		s.streamMedias[media], err = newStreamMedia(udpMaxPayloadSize, media, generateRTPPackets, decodeErrLogger)
+		s.streamMedias[media], err = newStreamMedia(udpMaxPayloadSize, media, generateRTPPackets, decodeErrLogger, gopCache)
 		if err != nil {
 			return nil, err
 		}
@@ -180,9 +183,84 @@ func (s *Stream) StartReader(reader Reader) {
 
 	sr.start()
 
-	for _, sm := range s.streamMedias {
+	for m, sm := range s.streamMedias {
 		for _, sf := range sm.formats {
 			sf.startReader(sr)
+			if m.Type == description.MediaTypeVideo {
+				cb := sf.runningReaders[sr]
+				if cb == nil {
+					continue
+				}
+
+				framesWithAU := 0
+				for _, u := range s.CachedUnits {
+					if !isEmptyAU(u) {
+						framesWithAU++
+					}
+				}
+				if framesWithAU == 0 {
+					continue
+				}
+
+				// The previous p-frames must be sent at a certain speed to avoid the video freezing.
+				// We must update the PTS of the p-frames to have them played back real quick, but not instantly.
+				// If we do not update the PTS, the client will pause by an amount equal to the time between the p-frames.
+				// This is an issue because we want to send the p-frames as fast as possible.
+				playbackFPS := 100
+				msPerFrame := 1000 / playbackFPS
+				ticksPerMs := 90000 / 1000
+				lastTimestamp := s.CachedUnits[len(s.CachedUnits)-1].GetRTPPackets()[0].Timestamp
+				lastPts := s.CachedUnits[len(s.CachedUnits)-1].GetPTS()
+				delta := -ticksPerMs * framesWithAU * msPerFrame
+				start := time.Now()
+				for _, u := range s.CachedUnits {
+					if isEmptyAU(u) {
+						continue
+					}
+					delta += ticksPerMs * msPerFrame
+					start = start.Add(time.Millisecond * time.Duration(msPerFrame))
+
+					var clonedU unit.Unit
+					switch tunit := u.(type) {
+					case *unit.H264:
+						clonedU = &unit.H264{
+							Base: unit.Base{
+								RTPPackets: []*rtp.Packet{
+									{
+										Header: rtp.Header{
+											Timestamp: lastTimestamp + uint32(delta),
+										},
+									},
+								},
+								PTS: lastPts + int64(delta),
+							},
+							AU: tunit.AU,
+						}
+					case *unit.H265:
+						clonedU = &unit.H265{
+							Base: unit.Base{
+								RTPPackets: []*rtp.Packet{
+									{
+										Header: rtp.Header{
+											Timestamp: lastTimestamp + uint32(delta),
+										},
+									},
+								},
+								PTS: lastPts + int64(delta),
+							},
+							AU: tunit.AU,
+						}
+					}
+					until := start
+					sr.push(func() error {
+						size := unitSize(clonedU)
+						atomic.AddUint64(s.bytesSent, size)
+						err := cb(clonedU)
+						time.Sleep(time.Until(until))
+						return err
+					})
+				}
+			}
 		}
 	}
 

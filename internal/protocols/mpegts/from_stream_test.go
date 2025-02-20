@@ -22,6 +22,7 @@ func TestFromStreamNoSupportedCodecs(t *testing.T) {
 		}}},
 		true,
 		test.NilLogger,
+		false,
 	)
 	require.NoError(t, err)
 
@@ -49,6 +50,7 @@ func TestFromStreamSkipUnsupportedTracks(t *testing.T) {
 		}},
 		true,
 		test.NilLogger,
+		false,
 	)
 	require.NoError(t, err)
 

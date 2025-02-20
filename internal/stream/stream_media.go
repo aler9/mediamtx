@@ -15,6 +15,7 @@ func newStreamMedia(udpMaxPayloadSize int,
 	medi *description.Media,
 	generateRTPPackets bool,
 	decodeErrLogger logger.Writer,
+	gopCache bool,
 ) (*streamMedia, error) {
 	sm := &streamMedia{
 		formats: make(map[format.Format]*streamFormat),
@@ -26,6 +27,7 @@ func newStreamMedia(udpMaxPayloadSize int,
 			format:             forma,
 			generateRTPPackets: generateRTPPackets,
 			decodeErrLogger:    decodeErrLogger,
+			gopCache:           gopCache,
 		}
 		err := sf.initialize()
 		if err != nil {

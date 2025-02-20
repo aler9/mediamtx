@@ -59,6 +59,7 @@ func (p *dummyPath) StartPublisher(req defs.PathStartPublisherReq) (*stream.Stre
 		req.Desc,
 		true,
 		test.NilLogger,
+		false,
 	)
 	if err != nil {
 		return nil, err
@@ -354,8 +355,9 @@ func TestServerRead(t *testing.T) {
 	for _, ca := range []struct {
 		name          string
 		medias        []*description.Media
-		unit          unit.Unit
+		unit          []unit.Unit
 		outRTPPayload []byte
+		gopCache      bool
 	}{
 		{
 			"av1",
@@ -365,10 +367,13 @@ func TestServerRead(t *testing.T) {
 					PayloadTyp: 96,
 				}},
 			}},
-			&unit.AV1{
-				TU: [][]byte{{1, 2}},
+			[]unit.Unit{
+				&unit.AV1{
+					TU: [][]byte{{1, 2}},
+				},
 			},
 			[]byte{0, 2, 1, 2},
+			false,
 		},
 		{
 			"vp9",
@@ -378,14 +383,17 @@ func TestServerRead(t *testing.T) {
 					PayloadTyp: 96,
 				}},
 			}},
-			&unit.VP9{
-				Frame: []byte{0x82, 0x49, 0x83, 0x42, 0x0, 0x77, 0xf0, 0x32, 0x34},
+			[]unit.Unit{
+				&unit.VP9{
+					Frame: []byte{0x82, 0x49, 0x83, 0x42, 0x0, 0x77, 0xf0, 0x32, 0x34},
+				},
 			},
 			[]byte{
 				0x8f, 0xa0, 0xfd, 0x18, 0x07, 0x80, 0x03, 0x24,
 				0x01, 0x14, 0x01, 0x82, 0x49, 0x83, 0x42, 0x00,
 				0x77, 0xf0, 0x32, 0x34,
 			},
+			false,
 		},
 		{
 			"vp8",
@@ -395,17 +403,22 @@ func TestServerRead(t *testing.T) {
 					PayloadTyp: 96,
 				}},
 			}},
-			&unit.VP8{
-				Frame: []byte{1, 2},
+			[]unit.Unit{
+				&unit.VP8{
+					Frame: []byte{1, 2},
+				},
 			},
 			[]byte{0x10, 1, 2},
+			false,
 		},
 		{
 			"h264",
 			[]*description.Media{test.MediaH264},
-			&unit.H264{
-				AU: [][]byte{
-					{5, 1},
+			[]unit.Unit{
+				&unit.H264{
+					AU: [][]byte{
+						{5, 1},
+					},
 				},
 			},
 			[]byte{
@@ -415,6 +428,145 @@ func TestServerRead(t *testing.T) {
 				0x3c, 0x60, 0xc9, 0x20, 0x00, 0x04, 0x08, 0x06,
 				0x07, 0x08, 0x00, 0x02, 0x05, 0x01,
 			},
+			false,
+		},
+		{
+			"h264 with gop cache",
+			[]*description.Media{test.MediaH264},
+			[]unit.Unit{
+				// ffmpeg -f lavfi -i color=blue:s=2x2 -vframes 10 -c:v libx264 out.264
+				&unit.H264{
+					AU: [][]byte{
+						{
+							0x65, 0x88, 0x84, 0x00, 0x37, 0xff, 0xfe, 0xe1,
+							0x03, 0xf8, 0x14, 0xd7, 0x4d, 0xfe, 0x63, 0x8f,
+							0x43, 0xd9, 0x01, 0x68, 0xc1,
+						},
+					},
+				},
+				&unit.H264{
+					AU: [][]byte{
+						{0x41, 0x9a, 0x24, 0x6c, 0x43, 0x7f, 0xfe, 0xe0},
+					},
+				},
+				&unit.H264{
+					AU: [][]byte{
+						{0x41, 0x9e, 0x42, 0x78, 0x85, 0xff, 0xc1, 0x81},
+					},
+				},
+				&unit.H264{
+					AU: [][]byte{
+						{0x01, 0x9e, 0x61, 0x74, 0x42, 0xbf, 0xc4, 0x80},
+					},
+				},
+				&unit.H264{
+					AU: [][]byte{
+						{0x01, 0x9e, 0x63, 0x6a, 0x42, 0xbf, 0xc4, 0x81},
+					},
+				},
+				&unit.H264{
+					AU: [][]byte{
+						{0x41, 0x9a, 0x68, 0x49, 0xa8, 0x41, 0x68, 0x99, 0x4c, 0x08, 0x5f, 0xff, 0xfe, 0xe1},
+					},
+				},
+				&unit.H264{
+					AU: [][]byte{
+						{0x41, 0x9e, 0x86, 0x45, 0x11, 0x2c, 0x2f, 0xff, 0xc1, 0x81},
+					},
+				},
+				&unit.H264{
+					AU: [][]byte{
+						{0x01, 0x9e, 0xa5, 0x74, 0x42, 0xbf, 0xc4, 0x81},
+					},
+				},
+				&unit.H264{
+					AU: [][]byte{
+						{0x01, 0x9e, 0xa7, 0x6a, 0x42, 0xbf, 0xc4, 0x80},
+					},
+				},
+				&unit.H264{
+					AU: [][]byte{
+						{0x41, 0x9a, 0xa9, 0x49, 0xa8, 0x41, 0x6c, 0x99, 0x4c, 0x08, 0x57, 0xff, 0xfe, 0xc0},
+					},
+				},
+			},
+			[]byte{
+				0x18, 0x00, 0x19, 0x67, 0x42, 0xc0, 0x28, 0xd9, 0x00, 0x78, 0x02, 0x27, 0xe5, 0x84, 0x00, 0x00,
+				0x03, 0x00, 0x04, 0x00, 0x00, 0x03, 0x00, 0xf0, 0x3c, 0x60, 0xc9, 0x20, 0x00, 0x04, 0x08, 0x06,
+				0x07, 0x08, 0x00, 0x15, 0x65, 0x88, 0x84, 0x00, 0x37, 0xff, 0xfe, 0xe1, 0x03, 0xf8, 0x14, 0xd7,
+				0x4d, 0xfe, 0x63, 0x8f, 0x43, 0xd9, 0x01, 0x68, 0xc1,
+			},
+			true,
+		},
+		{
+			"h265 with gop cache",
+			[]*description.Media{test.MediaH265},
+			[]unit.Unit{
+				// ffmpeg -f lavfi -i color=blue:s=16x16 -vframes 10 -c:v libx265 out.265
+				&unit.H265{
+					AU: [][]byte{
+						{
+							0x28, 0x01, 0xaf, 0x1d, 0x80, 0xf0, 0x0e, 0x9e, 0x0f, 0xfd, 0x7d, 0x3a, 0x39, 0xb1,
+							0xc7, 0x6f, 0x98,
+						},
+					},
+				},
+				&unit.H265{
+					AU: [][]byte{
+						{0x02, 0x01, 0xd0, 0x29, 0x4b, 0xe1, 0x0c, 0x63, 0x90, 0xfa, 0x84},
+					},
+				},
+				&unit.H265{
+					AU: [][]byte{
+						{0x02, 0x01, 0xe0, 0x64, 0x9d, 0x78, 0x61, 0x24, 0xc5, 0x60},
+					},
+				},
+				&unit.H265{
+					AU: [][]byte{
+						{0x00, 0x01, 0xe0, 0x24, 0xf5, 0x5f, 0xa2, 0xc2, 0x98, 0xc8, 0x20},
+					},
+				},
+				&unit.H265{
+					AU: [][]byte{
+						{0x00, 0x01, 0xe0, 0x44, 0xd7, 0x5f, 0xa2, 0xc2, 0x88, 0xc8, 0x20},
+					},
+				},
+				&unit.H265{
+					AU: [][]byte{
+						{0x00, 0x01, 0xe0, 0x86, 0xb7, 0xfd, 0x46, 0x14, 0xc0, 0xc8, 0x20},
+					},
+				},
+				&unit.H265{
+					AU: [][]byte{
+						{0x02, 0x01, 0xd0, 0x48, 0x92, 0x55, 0xfd, 0xc4, 0x30, 0x18, 0xec, 0xfa, 0x84},
+					},
+				},
+				&unit.H265{
+					AU: [][]byte{
+						{0x02, 0x01, 0xe0, 0xe2, 0x25, 0x57, 0x5f, 0x71, 0x84, 0x90, 0xc5, 0x60},
+					},
+				},
+				&unit.H265{
+					AU: [][]byte{
+						{0x00, 0x01, 0xe0, 0xc6, 0xf5, 0xd7, 0xd2, 0x2c, 0x29, 0x80, 0xc8, 0x20},
+					},
+				},
+				&unit.H265{
+					AU: [][]byte{
+						{0x00, 0x01, 0xe1, 0x02, 0x2d, 0x57, 0xf7, 0x18, 0x51, 0xc8, 0x20},
+					},
+				},
+			},
+			[]byte{
+				0x60, 0x0, 0x0, 0x18, 0x40, 0x1, 0xc, 0x1, 0xff, 0xff, 0x2, 0x20, 0x0, 0x0, 0x3, 0x0, 0xb0, 0x0,
+				0x0, 0x3, 0x0, 0x0, 0x3, 0x0, 0x7b, 0x18, 0xb0, 0x24, 0x0, 0x3c, 0x42, 0x1, 0x1, 0x2, 0x20, 0x0,
+				0x0, 0x3, 0x0, 0xb0, 0x0, 0x0, 0x3, 0x0, 0x0, 0x3, 0x0, 0x7b, 0xa0, 0x7, 0x82, 0x0, 0x88, 0x7d,
+				0xb6, 0x71, 0x8b, 0x92, 0x44, 0x80, 0x53, 0x88, 0x88, 0x92, 0xcf, 0x24, 0xa6, 0x92, 0x72, 0xc9,
+				0x12, 0x49, 0x22, 0xdc, 0x91, 0xaa, 0x48, 0xfc, 0xa2, 0x23, 0xff, 0x0, 0x1, 0x0, 0x1, 0x6a, 0x2,
+				0x2, 0x2, 0x1, 0x0, 0x8, 0x44, 0x1, 0xc0, 0x25, 0x2f, 0x5, 0x32, 0x40, 0x0, 0x11, 0x28, 0x1, 0xaf,
+				0x1d, 0x80, 0xf0, 0xe, 0x9e, 0xf, 0xfd, 0x7d, 0x3a, 0x39, 0xb1, 0xc7, 0x6f, 0x98,
+			},
+			true,
 		},
 		{
 			"opus",
@@ -425,10 +577,13 @@ func TestServerRead(t *testing.T) {
 					ChannelCount: 2,
 				}},
 			}},
-			&unit.Opus{
-				Packets: [][]byte{{1, 2}},
+			[]unit.Unit{
+				&unit.Opus{
+					Packets: [][]byte{{1, 2}},
+				},
 			},
 			[]byte{1, 2},
+			false,
 		},
 		{
 			"g722",
@@ -436,22 +591,25 @@ func TestServerRead(t *testing.T) {
 				Type:    description.MediaTypeAudio,
 				Formats: []format.Format{&format.G722{}},
 			}},
-			&unit.Generic{
-				Base: unit.Base{
-					RTPPackets: []*rtp.Packet{{
-						Header: rtp.Header{
-							Version:        2,
-							Marker:         true,
-							PayloadType:    9,
-							SequenceNumber: 1123,
-							Timestamp:      45343,
-							SSRC:           563423,
-						},
-						Payload: []byte{1, 2},
-					}},
+			[]unit.Unit{
+				&unit.Generic{
+					Base: unit.Base{
+						RTPPackets: []*rtp.Packet{{
+							Header: rtp.Header{
+								Version:        2,
+								Marker:         true,
+								PayloadType:    9,
+								SequenceNumber: 1123,
+								Timestamp:      45343,
+								SSRC:           563423,
+							},
+							Payload: []byte{1, 2},
+						}},
+					},
 				},
 			},
 			[]byte{1, 2},
+			false,
 		},
 		{
 			"g711 8khz mono",
@@ -463,10 +621,13 @@ func TestServerRead(t *testing.T) {
 					ChannelCount: 1,
 				}},
 			}},
-			&unit.G711{
-				Samples: []byte{1, 2, 3},
+			[]unit.Unit{
+				&unit.G711{
+					Samples: []byte{1, 2, 3},
+				},
 			},
 			[]byte{1, 2, 3},
+			false,
 		},
 		{
 			"g711 16khz stereo",
@@ -478,10 +639,13 @@ func TestServerRead(t *testing.T) {
 					ChannelCount: 2,
 				}},
 			}},
-			&unit.G711{
-				Samples: []byte{1, 2, 3, 4},
+			[]unit.Unit{
+				&unit.G711{
+					Samples: []byte{1, 2, 3, 4},
+				},
 			},
 			[]byte{0x86, 0x84, 0x8a, 0x84, 0x8e, 0x84, 0x92, 0x84},
+			false,
 		},
 		{
 			"lpcm",
@@ -494,10 +658,13 @@ func TestServerRead(t *testing.T) {
 					ChannelCount: 2,
 				}},
 			}},
-			&unit.LPCM{
-				Samples: []byte{1, 2, 3, 4},
+			[]unit.Unit{
+				&unit.LPCM{
+					Samples: []byte{1, 2, 3, 4},
+				},
 			},
 			[]byte{1, 2, 3, 4},
+			false,
 		},
 	} {
 		t.Run(ca.name, func(t *testing.T) {
@@ -507,8 +674,9 @@ func TestServerRead(t *testing.T) {
 				512,
 				1460,
 				desc,
-				reflect.TypeOf(ca.unit) != reflect.TypeOf(&unit.Generic{}),
+				reflect.TypeOf(ca.unit[0]) != reflect.TypeOf(&unit.Generic{}),
 				test.NilLogger,
+				ca.gopCache,
 			)
 			require.NoError(t, err)
 
@@ -574,16 +742,26 @@ func TestServerRead(t *testing.T) {
 			go func() {
 				defer close(writerDone)
 
-				str.WaitRunningReader()
+				// When testing for gopCache, start pushing packets before the client connects
+				if !ca.gopCache {
+					str.WaitRunningReader()
+				}
 
-				r := reflect.New(reflect.TypeOf(ca.unit).Elem())
-				r.Elem().Set(reflect.ValueOf(ca.unit).Elem())
+				for i, u := range ca.unit {
+					r := reflect.New(reflect.TypeOf(u).Elem())
+					r.Elem().Set(reflect.ValueOf(u).Elem())
 
-				if g, ok := r.Interface().(*unit.Generic); ok {
-					clone := *g.RTPPackets[0]
-					str.WriteRTPPacket(desc.Medias[0], desc.Medias[0].Formats[0], &clone, time.Time{}, 0)
-				} else {
-					str.WriteUnit(desc.Medias[0], desc.Medias[0].Formats[0], r.Interface().(unit.Unit))
+					// When testing for gopCache, wait until half-way before pushing the rest of segments.
+					if i == len(ca.unit)/2 && ca.gopCache {
+						str.WaitRunningReader()
+					}
+
+					if g, ok := r.Interface().(*unit.Generic); ok {
+						clone := *g.RTPPackets[0]
+						str.WriteRTPPacket(desc.Medias[0], desc.Medias[0].Formats[0], &clone, time.Time{}, 0)
+					} else {
+						str.WriteUnit(desc.Medias[0], desc.Medias[0].Formats[0], r.Interface().(unit.Unit))
+					}
 				}
 			}()
 

@@ -7,19 +7,10 @@ on:
 
 jobs:
   binaries:
-    runs-on: ubuntu-22.04
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - run: make binaries
-      env:
-        CHECKSUM: '1'
-
-    - uses: actions/upload-artifact@v4
-      with:
-        name: binaries
-        path: binaries
+    uses: ./.github/workflows/nightly_binaries.yml
+    with:
+      checksum: true
+      combine: true
 
   github_release:
     needs: binaries

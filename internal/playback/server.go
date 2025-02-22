@@ -22,6 +22,7 @@ type serverAuthManager interface {
 // Server is the playback server.
 type Server struct {
 	Address        string
+	BaseUrl        string
 	Encryption     bool
 	ServerKey      string
 	ServerCert     string

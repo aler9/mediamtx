@@ -327,6 +327,7 @@ func (p *Core) createResources(initial bool) error {
 		p.playbackServer == nil {
 		i := &playback.Server{
 			Address:        p.conf.PlaybackAddress,
+			BaseUrl:        p.conf.PlaybackBaseUrl,
 			Encryption:     p.conf.PlaybackEncryption,
 			ServerKey:      p.conf.PlaybackServerKey,
 			ServerCert:     p.conf.PlaybackServerCert,

@@ -224,12 +224,19 @@ func (s *Server) onList(ctx *gin.Context) {
 		v.Add("path", pathName)
 		v.Add("start", entries[i].Start.Format(time.RFC3339Nano))
 		v.Add("duration", strconv.FormatFloat(time.Duration(entries[i].Duration).Seconds(), 'f', -1, 64))
-		u := &url.URL{
-			Scheme:   scheme,
-			Host:     ctx.Request.Host,
-			Path:     "/get",
-			RawQuery: v.Encode(),
+
+		var u *url.URL
+		if s.BaseUrl != "" {
+			u, _ = url.Parse(s.BaseUrl)
+			u = u.JoinPath("get")
+		} else {
+			u = &url.URL{
+				Scheme: scheme,
+				Host:   ctx.Request.Host,
+				Path:   "/get",
+			}
 		}
+		u.RawQuery = v.Encode()
 		entries[i].URL = u.String()
 	}
 

@@ -316,7 +316,7 @@ func (m *Metrics) onMetrics(ctx *gin.Context) {
 		data, err := m.srtServer.APIConnsList()
 		if err == nil && len(data.Items) != 0 {
 			for _, i := range data.Items {
-				tags := "{id=\"" + i.ID.String() + "\",state=\"" + string(i.State) + "\"}"
+				tags := "{id=\"" + i.ID.String() + "\",state=\"" + string(i.State) + "\",path=\"" + string(i.Path) + "\",addr=\"" + string(i.RemoteAddr) + "\"}"
 				out += metric("srt_conns", tags, 1)
 				out += metric("srt_conns_packets_sent", tags, int64(i.PacketsSent))
 				out += metric("srt_conns_packets_received", tags, int64(i.PacketsReceived))

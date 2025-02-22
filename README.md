@@ -75,6 +75,7 @@ _rtsp-simple-server_ has been rebranded as _MediaMTX_. The reason is pretty obvi
   * [Standalone binary](#standalone-binary)
   * [Docker image](#docker-image)
   * [Arch Linux package](#arch-linux-package)
+  * [FreeBSD](#freebsd)
   * [OpenWrt binary](#openwrt-binary)
 * [Basic usage](#basic-usage)
 * [Publish to the server](#publish-to-the-server)
@@ -159,7 +160,7 @@ _rtsp-simple-server_ has been rebranded as _MediaMTX_. The reason is pretty obvi
 
 ## Installation
 
-There are several installation methods available: standalone binary, Docker image, Arch Linux package and OpenWrt binary.
+There are several installation methods available: standalone binary, Docker image, Arch Linux package, FreeBSD Ports Collection or package and OpenWrt binary.
 
 ### Standalone binary
 
@@ -213,6 +214,15 @@ If you are running the Arch Linux distribution, run:
 git clone https://aur.archlinux.org/mediamtx.git
 cd mediamtx
 makepkg -si
+```
+
+### FreeBSD
+
+Available via ports tree or using packages (2025Q2 and later) as listed below:
+
+```
+cd /usr/ports/multimedia/mediamtx && make install clean
+pkg install mediamtx
 ```
 
 ### OpenWrt binary

@@ -100,6 +100,9 @@ func (w *Writer) writeTracks(videoTrack format.Format, audioTrack format.Format)
 						case *format.MPEG4Audio:
 							return message.CodecMPEG4Audio
 
+						case *format.Opus:
+							return float64(message.FourCCOpus)
+
 						default:
 							return 0
 						}
@@ -162,6 +165,21 @@ func (w *Writer) writeTracks(videoTrack format.Format, audioTrack format.Format)
 		}
 	}
 
+	if track, ok := audioTrack.(*format.Opus); ok {
+		err = w.conn.Write(&message.AudioExSequenceStart{
+			ChunkStreamID:   message.AudioChunkStreamID,
+			MessageStreamID: 0x1000000,
+			FourCC:          message.FourCCOpus,
+			OpusHeader: &message.OpusIDHeader{
+				ChannelCount: uint8(track.ChannelCount),
+				PreSkip:      3840,
+			},
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -211,4 +229,20 @@ func (w *Writer) WriteMPEG1Audio(pts time.Duration, h *mpeg1audio.FrameHeader, f
 		Payload:         frame,
 		DTS:             pts,
 	})
+}
+
+func (w *Writer) WriteOpus(pts time.Duration, packets [][]byte) error {
+	// only write one packet for now
+	// additional packets will require self-delimiting framing
+	// see Appendix B of RFC 6716
+	for _, packet := range packets {
+		return w.conn.Write(&message.AudioExCodedFrames{
+			ChunkStreamID:   message.AudioChunkStreamID,
+			MessageStreamID: 0x1000000,
+			DTS:             pts,
+			FourCC:          message.FourCCOpus,
+			Payload:         packet,
+		})
+	}
+	return nil
 }

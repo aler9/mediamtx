@@ -16,7 +16,7 @@ import (
 )
 
 var errNoSupportedCodecsFrom = errors.New(
-	"the stream doesn't contain any supported codec, which are currently H264, MPEG-4 Audio, MPEG-1/2 Audio")
+	"the stream doesn't contain any supported codec, which are currently H264, MPEG-4 Audio, MPEG-1/2 Audio, Opus")
 
 func multiplyAndDivide2(v, m, d time.Duration) time.Duration {
 	secs := v / d
@@ -177,6 +177,24 @@ func setupAudio(
 			})
 
 		return audioFormatMPEG1
+	}
+
+	var audioFormatOpus *format.Opus
+	audioMedia = strea.Desc().FindFormat(&audioFormatOpus)
+	if audioMedia != nil {
+		strea.AddReader(
+			reader,
+			audioMedia,
+			audioFormatOpus,
+			func(u unit.Unit) error {
+				tunit := u.(*unit.Opus)
+				if tunit.Packets == nil {
+					return nil
+				}
+				nconn.SetWriteDeadline(time.Now().Add(writeTimeout))
+				return (*w).WriteOpus(timestampToDuration(tunit.PTS, audioFormatOpus.ClockRate()), tunit.Packets)
+			})
+		return audioFormatOpus
 	}
 
 	return nil

@@ -268,6 +268,7 @@ func (s *session) onPlay(_ *gortsplib.ServerHandlerOnPlayCtx) (*base.Response, e
 				}
 			}
 		}
+	}
 
 	return &base.Response{
 		StatusCode: base.StatusOK,

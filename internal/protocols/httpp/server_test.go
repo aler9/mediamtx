@@ -36,3 +36,17 @@ func TestFilterEmptyPath(t *testing.T) {
 	_, err = io.ReadFull(conn, buf)
 	require.NoError(t, err)
 }
+
+func TestUnixSocket(t *testing.T) {
+	s := &Server{
+		Network:     "tcp",
+		Address:     "unix://http.sock",
+		ReadTimeout: 10 * time.Second,
+		Parent:      test.NilLogger,
+	}
+	err := s.Initialize()
+	require.NoError(t, err)
+	defer s.Close()
+
+	require.Equal(t, s.Network, "unix")
+}

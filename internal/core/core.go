@@ -356,6 +356,7 @@ func (p *Core) createResources(initial bool) error {
 			pathConfs:         p.conf.Paths,
 			externalCmdPool:   p.externalCmdPool,
 			parent:            p,
+			gopCache:          p.conf.GopCache,
 		}
 		p.pathManager.initialize()
 
@@ -710,6 +711,7 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		newConf.WriteTimeout != p.conf.WriteTimeout ||
 		newConf.WriteQueueSize != p.conf.WriteQueueSize ||
 		newConf.UDPMaxPayloadSize != p.conf.UDPMaxPayloadSize ||
+		newConf.GopCache != p.conf.GopCache ||
 		closeMetrics ||
 		closeAuthManager ||
 		closeLogger

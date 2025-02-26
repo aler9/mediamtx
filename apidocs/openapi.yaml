@@ -71,6 +71,8 @@ components:
           type: boolean
         runOnDisconnect:
           type: string
+        gopCache:
+          type: boolean
 
         # Authentication
         authMethod:

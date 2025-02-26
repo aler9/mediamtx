@@ -70,6 +70,7 @@ func (t *SourceTester) SetReady(req defs.PathSourceStaticSetReadyReq) defs.PathS
 		req.Desc,
 		req.GenerateRTPPackets,
 		t,
+		false,
 	)
 
 	t.reader = NilLogger

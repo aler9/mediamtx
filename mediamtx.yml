@@ -23,6 +23,9 @@ writeQueueSize: 512
 # Maximum size of outgoing UDP packets.
 # This can be decreased to avoid fragmentation on networks with a low UDP MTU.
 udpMaxPayloadSize: 1472
+# Enable GOP cache to improve initial playback experience for new clients.
+# Note: will increase memory usage.
+gopCache: false
 
 # Command to run when a client connects to the server.
 # This is terminated with SIGINT when a client disconnects from the server.

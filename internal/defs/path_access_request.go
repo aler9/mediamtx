@@ -32,15 +32,12 @@ type PathAccessRequest struct {
 	SkipAuth bool
 
 	// only if skipAuth = false
-	User  string
-	Pass  string
-	IP    net.IP
-	Proto auth.Protocol
-	ID    *uuid.UUID
-
-	// RTSP only
-	RTSPRequest *base.Request
-	RTSPNonce   string
+	User             string
+	Pass             string
+	IP               net.IP
+	CustomVerifyFunc func(expectedUser string, expectedPass string) bool
+	Proto            auth.Protocol
+	ID               *uuid.UUID
 }
 
 // ToAuthRequest converts a path access request into an authentication request.
@@ -55,12 +52,11 @@ func (r *PathAccessRequest) ToAuthRequest() *auth.Request {
 			}
 			return conf.AuthActionRead
 		}(),
-		Path:        r.Name,
-		Protocol:    r.Proto,
-		ID:          r.ID,
-		Query:       r.Query,
-		RTSPRequest: r.RTSPRequest,
-		RTSPNonce:   r.RTSPNonce,
+		CustomVerifyFunc: r.CustomVerifyFunc,
+		Path:             r.Name,
+		Protocol:         r.Proto,
+		ID:               r.ID,
+		Query:            r.Query,
 	}
 }
 
@@ -69,11 +65,9 @@ func (r *PathAccessRequest) FillFromRTSPRequest(rt *base.Request) {
 	var rtspAuthHeader headers.Authorization
 	err := rtspAuthHeader.Unmarshal(rt.Header["Authorization"])
 	if err == nil {
+		r.User = rtspAuthHeader.Username
 		if rtspAuthHeader.Method == headers.AuthMethodBasic {
-			r.User = rtspAuthHeader.BasicUser
 			r.Pass = rtspAuthHeader.BasicPass
-		} else {
-			r.User = rtspAuthHeader.Username
 		}
 	}
 }

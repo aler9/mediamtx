@@ -266,7 +266,7 @@ func TestConfErrors(t *testing.T) {
 			"yaml: unmarshal errors:\n  line 2: key \"paths\" already set in map",
 		},
 		{
-			"non existent parameter 1",
+			"non existent parameter",
 			`invalid: param`,
 			"json: unknown field \"invalid\"",
 		},
@@ -308,11 +308,17 @@ func TestConfErrors(t *testing.T) {
 			"invalid ICE server: 'testing'",
 		},
 		{
-			"non existent parameter 2",
+			"non existent parameter in path",
 			"paths:\n" +
 				"  mypath:\n" +
 				"    invalid: parameter\n",
 			"json: unknown field \"invalid\"",
+		},
+		{
+			"non existent parameter in auth",
+			"authInternalUsers:\n" +
+				"- users: test\n",
+			"json: unknown field \"users\"",
 		},
 		{
 			"invalid path name",
@@ -373,6 +379,51 @@ func TestConfErrors(t *testing.T) {
 				"authJWTJWKS: https://not-real.com\n" +
 				"authJWTClaimKey: \"\"",
 			"'authJWTClaimKey' is empty",
+		},
+		{
+			"invalid rtsp auth methods",
+			"rtspAuthMethods: []",
+			"at least one 'rtspAuthMethods' must be provided",
+		},
+		{
+			"invalid fallback",
+			"paths:\n" +
+				"  my_path:\n" +
+				"    fallback: invalid://invalid",
+			`'invalid://invalid' is not a valid RTSP URL`,
+		},
+		{
+			"invalid source redirect",
+			"paths:\n" +
+				"  my_path:\n" +
+				"    source: redirect\n" +
+				"    sourceRedirect: invalid://invalid",
+			`'invalid://invalid' is not a valid RTSP URL`,
+		},
+		{
+			"useless source redirect",
+			"paths:\n" +
+				"  my_path:\n" +
+				"    sourceRedirect: invalid://invalid",
+			`'sourceRedirect' is useless when source is not 'redirect'`,
+		},
+		{
+			"invalid user",
+			"authInternalUsers:\n" +
+				"- user:\n" +
+				"  pass: test\n" +
+				"  permissions:\n" +
+				"  - action: publish\n",
+			"empty usernames are not supported",
+		},
+		{
+			"invalid pass",
+			"authInternalUsers:\n" +
+				"- user: any\n" +
+				"  pass: test\n" +
+				"  permissions:\n" +
+				"  - action: publish\n",
+			`using a password with 'any' user is not supported`,
 		},
 	} {
 		t.Run(ca.name, func(t *testing.T) {

@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4/pkg/format"
-	"github.com/bluenviron/mediacommon/pkg/codecs/h264"
-	"github.com/bluenviron/mediacommon/pkg/codecs/mpeg1audio"
-	"github.com/bluenviron/mediacommon/pkg/codecs/mpeg4audio"
+	"github.com/bluenviron/mediacommon/v2/pkg/codecs/h264"
+	"github.com/bluenviron/mediacommon/v2/pkg/codecs/mpeg1audio"
+	"github.com/bluenviron/mediacommon/v2/pkg/codecs/mpeg4audio"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/stream"
 	"github.com/bluenviron/mediamtx/internal/unit"
@@ -39,7 +39,7 @@ func setupVideo(
 	videoMedia := strea.Desc().FindFormat(&videoFormatH264)
 
 	if videoFormatH264 != nil {
-		var videoDTSExtractor *h264.DTSExtractor2
+		var videoDTSExtractor *h264.DTSExtractor
 
 		strea.AddReader(
 			reader,
@@ -72,7 +72,7 @@ func setupVideo(
 						return nil
 					}
 
-					videoDTSExtractor = h264.NewDTSExtractor2()
+					videoDTSExtractor = h264.NewDTSExtractor()
 				} else if !idrPresent && !nonIDRPresent {
 					return nil
 				}

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4"
-	rtspauth "github.com/bluenviron/gortsplib/v4/pkg/auth"
 	"github.com/bluenviron/gortsplib/v4/pkg/base"
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
 	"github.com/google/uuid"
@@ -102,25 +101,16 @@ func (s *session) onAnnounce(c *conn, ctx *gortsplib.ServerHandlerOnAnnounceCtx)
 	}
 	ctx.Path = ctx.Path[1:]
 
-	if c.authNonce == "" {
-		var err error
-		c.authNonce, err = rtspauth.GenerateNonce()
-		if err != nil {
-			return &base.Response{
-				StatusCode: base.StatusInternalServerError,
-			}, err
-		}
-	}
-
 	req := defs.PathAccessRequest{
-		Name:        ctx.Path,
-		Query:       ctx.Query,
-		Publish:     true,
-		IP:          c.ip(),
-		Proto:       auth.ProtocolRTSP,
-		ID:          &c.uuid,
-		RTSPRequest: ctx.Request,
-		RTSPNonce:   c.authNonce,
+		Name:    ctx.Path,
+		Query:   ctx.Query,
+		Publish: true,
+		IP:      c.ip(),
+		Proto:   auth.ProtocolRTSP,
+		ID:      &c.uuid,
+		CustomVerifyFunc: func(expectedUser, expectedPass string) bool {
+			return c.rconn.VerifyCredentials(ctx.Request, expectedUser, expectedPass)
+		},
 	}
 	req.FillFromRTSPRequest(ctx.Request)
 
@@ -129,9 +119,9 @@ func (s *session) onAnnounce(c *conn, ctx *gortsplib.ServerHandlerOnAnnounceCtx)
 		AccessRequest: req,
 	})
 	if err != nil {
-		var terr *auth.Error
+		var terr auth.Error
 		if errors.As(err, &terr) {
-			return c.handleAuthError(terr)
+			return c.handleAuthError(ctx.Request)
 		}
 
 		return &base.Response{
@@ -176,24 +166,15 @@ func (s *session) onSetup(c *conn, ctx *gortsplib.ServerHandlerOnSetupCtx,
 
 	switch s.rsession.State() {
 	case gortsplib.ServerSessionStateInitial, gortsplib.ServerSessionStatePrePlay: // play
-		if c.authNonce == "" {
-			var err error
-			c.authNonce, err = rtspauth.GenerateNonce()
-			if err != nil {
-				return &base.Response{
-					StatusCode: base.StatusInternalServerError,
-				}, nil, err
-			}
-		}
-
 		req := defs.PathAccessRequest{
-			Name:        ctx.Path,
-			Query:       ctx.Query,
-			IP:          c.ip(),
-			Proto:       auth.ProtocolRTSP,
-			ID:          &c.uuid,
-			RTSPRequest: ctx.Request,
-			RTSPNonce:   c.authNonce,
+			Name:  ctx.Path,
+			Query: ctx.Query,
+			IP:    c.ip(),
+			Proto: auth.ProtocolRTSP,
+			ID:    &c.uuid,
+			CustomVerifyFunc: func(expectedUser, expectedPass string) bool {
+				return c.rconn.VerifyCredentials(ctx.Request, expectedUser, expectedPass)
+			},
 		}
 		req.FillFromRTSPRequest(ctx.Request)
 
@@ -202,9 +183,9 @@ func (s *session) onSetup(c *conn, ctx *gortsplib.ServerHandlerOnSetupCtx,
 			AccessRequest: req,
 		})
 		if err != nil {
-			var terr *auth.Error
+			var terr auth.Error
 			if errors.As(err, &terr) {
-				res, err2 := c.handleAuthError(terr)
+				res, err2 := c.handleAuthError(ctx.Request)
 				return res, nil, err2
 			}
 
@@ -396,9 +377,6 @@ func (s *session) apiItem() *defs.APIRTSPSession {
 	defer s.mutex.Unlock()
 
 	stats := s.rsession.Stats()
-	if stats == nil {
-		stats = &gortsplib.StatsSession{}
-	}
 
 	return &defs.APIRTSPSession{
 		ID:         s.uuid,

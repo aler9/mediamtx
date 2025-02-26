@@ -4,11 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4"
 	rtspauth "github.com/bluenviron/gortsplib/v4/pkg/auth"
 	"github.com/bluenviron/gortsplib/v4/pkg/base"
+	"github.com/bluenviron/gortsplib/v4/pkg/headers"
+	"github.com/bluenviron/gortsplib/v4/pkg/liberrors"
 	"github.com/google/uuid"
 
 	"github.com/bluenviron/mediamtx/internal/auth"
@@ -19,19 +22,34 @@ import (
 	"github.com/bluenviron/mediamtx/internal/logger"
 )
 
-const (
-	rtspAuthRealm = "IPCAM"
-)
+func absoluteURL(req *base.Request, v string) string {
+	if strings.HasPrefix(v, "/") {
+		ur := base.URL{
+			Scheme: req.URL.Scheme,
+			Host:   req.URL.Host,
+			Path:   v,
+		}
+		return ur.String()
+	}
+
+	return v
+}
+
+func credentialsProvided(req *base.Request) bool {
+	var auth headers.Authorization
+	err := auth.Unmarshal(req.Header["Authorization"])
+	return err == nil && auth.Username != ""
+}
 
 type connParent interface {
 	logger.Writer
-	findSessionByRSession(rsession *gortsplib.ServerSession) *session
+	findSessionByRSessionUnsafe(rsession *gortsplib.ServerSession) *session
 }
 
 type conn struct {
 	isTLS               bool
 	rtspAddress         string
-	authMethods         []rtspauth.ValidateMethod
+	authMethods         []rtspauth.VerifyMethod
 	readTimeout         conf.Duration
 	runOnConnect        string
 	runOnConnectRestart bool
@@ -45,8 +63,6 @@ type conn struct {
 	uuid             uuid.UUID
 	created          time.Time
 	onDisconnectHook func()
-	authNonce        string
-	authFailures     int
 }
 
 func (c *conn) initialize() {
@@ -121,24 +137,15 @@ func (c *conn) onDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx,
 	}
 	ctx.Path = ctx.Path[1:]
 
-	if c.authNonce == "" {
-		var err error
-		c.authNonce, err = rtspauth.GenerateNonce()
-		if err != nil {
-			return &base.Response{
-				StatusCode: base.StatusInternalServerError,
-			}, nil, err
-		}
-	}
-
 	req := defs.PathAccessRequest{
-		Name:        ctx.Path,
-		Query:       ctx.Query,
-		IP:          c.ip(),
-		Proto:       auth.ProtocolRTSP,
-		ID:          &c.uuid,
-		RTSPRequest: ctx.Request,
-		RTSPNonce:   c.authNonce,
+		Name:  ctx.Path,
+		Query: ctx.Query,
+		IP:    c.ip(),
+		Proto: auth.ProtocolRTSP,
+		ID:    &c.uuid,
+		CustomVerifyFunc: func(expectedUser, expectedPass string) bool {
+			return c.rconn.VerifyCredentials(ctx.Request, expectedUser, expectedPass)
+		},
 	}
 	req.FillFromRTSPRequest(ctx.Request)
 
@@ -147,10 +154,10 @@ func (c *conn) onDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx,
 	})
 
 	if res.Err != nil {
-		var terr *auth.Error
+		var terr auth.Error
 		if errors.As(res.Err, &terr) {
-			res, err := c.handleAuthError(terr)
-			return res, nil, err
+			res, err2 := c.handleAuthError(ctx.Request)
+			return res, nil, err2
 		}
 
 		var terr2 defs.PathNoOnePublishingError
@@ -169,7 +176,7 @@ func (c *conn) onDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx,
 		return &base.Response{
 			StatusCode: base.StatusMovedPermanently,
 			Header: base.Header{
-				"Location": base.HeaderValue{res.Redirect},
+				"Location": base.HeaderValue{absoluteURL(ctx.Request, res.Redirect)},
 			},
 		}, nil, nil
 	}
@@ -186,37 +193,21 @@ func (c *conn) onDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx,
 	}, stream, nil
 }
 
-func (c *conn) handleAuthError(authErr error) (*base.Response, error) {
-	c.authFailures++
-
-	// VLC with login prompt sends 4 requests:
-	// 1) without credentials
-	// 2) with password but without username
-	// 3) without credentials
-	// 4) with password and username
-	// therefore we must allow up to 3 failures
-	if c.authFailures <= 3 {
-		return &base.Response{
-			StatusCode: base.StatusUnauthorized,
-			Header: base.Header{
-				"WWW-Authenticate": rtspauth.GenerateWWWAuthenticate(c.authMethods, rtspAuthRealm, c.authNonce),
-			},
-		}, nil
+func (c *conn) handleAuthError(req *base.Request) (*base.Response, error) {
+	if credentialsProvided(req) {
+		// wait some seconds to mitigate brute force attacks
+		<-time.After(auth.PauseAfterError)
 	}
 
-	// wait some seconds to mitigate brute force attacks
-	<-time.After(auth.PauseAfterError)
-
+	// let gortsplib decide whether connection should be terminated,
+	// depending on whether credentials have been provided or not.
 	return &base.Response{
 		StatusCode: base.StatusUnauthorized,
-	}, authErr
+	}, liberrors.ErrServerAuth{}
 }
 
 func (c *conn) apiItem() *defs.APIRTSPConn {
 	stats := c.rconn.Stats()
-	if stats == nil {
-		stats = &gortsplib.StatsConn{}
-	}
 
 	return &defs.APIRTSPConn{
 		ID:            c.uuid,
@@ -225,7 +216,7 @@ func (c *conn) apiItem() *defs.APIRTSPConn {
 		BytesReceived: stats.BytesReceived,
 		BytesSent:     stats.BytesSent,
 		Session: func() *uuid.UUID {
-			sx := c.parent.findSessionByRSession(c.rconn.Session())
+			sx := c.parent.findSessionByRSessionUnsafe(c.rconn.Session())
 			if sx != nil {
 				return &sx.uuid
 			}

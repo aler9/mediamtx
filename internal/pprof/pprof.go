@@ -105,7 +105,7 @@ func (pp *PPROF) middlewareAuth(ctx *gin.Context) {
 
 	err := pp.AuthManager.Authenticate(req)
 	if err != nil {
-		if err.(*auth.Error).AskCredentials { //nolint:errorlint
+		if err.(auth.Error).AskCredentials { //nolint:errorlint
 			ctx.Header("WWW-Authenticate", `Basic realm="mediamtx"`)
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return

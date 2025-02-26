@@ -16,6 +16,7 @@ func TestPeerConnectionCloseImmediately(t *testing.T) {
 	pc := &PeerConnection{
 		HandshakeTimeout:   conf.Duration(10 * time.Second),
 		TrackGatherTimeout: conf.Duration(2 * time.Second),
+		STUNGatherTimeout:  conf.Duration(5 * time.Second),
 		LocalRandomUDP:     true,
 		IPsFromInterfaces:  true,
 		Publish:            false,

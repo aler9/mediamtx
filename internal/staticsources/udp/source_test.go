@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bluenviron/mediacommon/pkg/formats/mpegts"
+	"github.com/bluenviron/mediacommon/v2/pkg/formats/mpegts"
 	"github.com/stretchr/testify/require"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
@@ -41,12 +41,12 @@ func TestSource(t *testing.T) {
 	w := mpegts.NewWriter(bw, []*mpegts.Track{track})
 	require.NoError(t, err)
 
-	err = w.WriteH2642(track, 0, 0, [][]byte{{ // IDR
+	err = w.WriteH264(track, 0, 0, [][]byte{{ // IDR
 		5, 1,
 	}})
 	require.NoError(t, err)
 
-	err = w.WriteH2642(track, 0, 0, [][]byte{{ // non-IDR
+	err = w.WriteH264(track, 0, 0, [][]byte{{ // non-IDR
 		5, 2,
 	}})
 	require.NoError(t, err)

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
-	mcmpegts "github.com/bluenviron/mediacommon/pkg/formats/mpegts"
+	mcmpegts "github.com/bluenviron/mediacommon/v2/pkg/formats/mpegts"
 	srt "github.com/datarhei/gosrt"
 	"github.com/google/uuid"
 
@@ -151,7 +151,7 @@ func (c *conn) runPublish(streamID *streamID) error {
 		},
 	})
 	if err != nil {
-		var terr *auth.Error
+		var terr auth.Error
 		if errors.As(err, &terr) {
 			// wait some seconds to mitigate brute force attacks
 			<-time.After(auth.PauseAfterError)
@@ -250,7 +250,7 @@ func (c *conn) runRead(streamID *streamID) error {
 		},
 	})
 	if err != nil {
-		var terr *auth.Error
+		var terr auth.Error
 		if errors.As(err, &terr) {
 			// wait some seconds to mitigate brute force attacks
 			<-time.After(auth.PauseAfterError)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
 	"github.com/bluenviron/mediamtx/internal/logger"
 )
 
@@ -34,7 +35,7 @@ func (d LogLevel) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (d *LogLevel) UnmarshalJSON(b []byte) error {
 	var in string
-	if err := json.Unmarshal(b, &in); err != nil {
+	if err := jsonwrapper.Unmarshal(b, &in); err != nil {
 		return err
 	}
 

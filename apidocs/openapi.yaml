@@ -292,6 +292,8 @@ components:
           type: string
         webrtcTrackGatherTimeout:
           type: string
+        webrtcSTUNGatherTimeout:
+          type: string
 
         # SRT server
         srt:

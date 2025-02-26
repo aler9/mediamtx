@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/bluenviron/gortsplib/v4/pkg/base"
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
@@ -439,19 +437,7 @@ func (pa *path) doDescribe(req defs.PathDescribeReq) {
 	}
 
 	if pa.conf.Fallback != "" {
-		fallbackURL := func() string {
-			if strings.HasPrefix(pa.conf.Fallback, "/") {
-				ur := base.URL{
-					Scheme: req.AccessRequest.RTSPRequest.URL.Scheme,
-					User:   req.AccessRequest.RTSPRequest.URL.User,
-					Host:   req.AccessRequest.RTSPRequest.URL.Host,
-					Path:   pa.conf.Fallback,
-				}
-				return ur.String()
-			}
-			return pa.conf.Fallback
-		}()
-		req.Res <- defs.PathDescribeRes{Redirect: fallbackURL}
+		req.Res <- defs.PathDescribeRes{Redirect: pa.conf.Fallback}
 		return
 	}
 

@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
 )
 
 var reDays = regexp.MustCompile("^(-?[0-9]+)d")
@@ -83,7 +85,7 @@ func (d *Duration) unmarshalInternal(in string) error {
 // UnmarshalJSON implements json.Unmarshaler.
 func (d *Duration) UnmarshalJSON(b []byte) error {
 	var in string
-	if err := json.Unmarshal(b, &in); err != nil {
+	if err := jsonwrapper.Unmarshal(b, &in); err != nil {
 		return err
 	}
 

@@ -1,7 +1,7 @@
 package recorder
 
 import (
-	"github.com/bluenviron/mediacommon/pkg/formats/fmp4"
+	"github.com/bluenviron/mediacommon/v2/pkg/formats/fmp4"
 )
 
 type formatFMP4Track struct {

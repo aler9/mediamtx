@@ -55,7 +55,7 @@ func TestSource(t *testing.T) {
 				Handler: &testServer{
 					onDescribe: func(ctx *gortsplib.ServerHandlerOnDescribeCtx,
 					) (*base.Response, *gortsplib.ServerStream, error) {
-						err2 := auth.Validate(ctx.Request, "testuser", "testpass", nil, "IPCAM", nonce)
+						err2 := auth.Verify(ctx.Request, "testuser", "testpass", nil, "IPCAM", nonce)
 						if err2 != nil {
 							return &base.Response{ //nolint:nilerr
 								StatusCode: base.StatusUnauthorized,
@@ -184,7 +184,7 @@ func TestRTSPSourceNoPassword(t *testing.T) {
 	s := gortsplib.Server{
 		Handler: &testServer{
 			onDescribe: func(ctx *gortsplib.ServerHandlerOnDescribeCtx) (*base.Response, *gortsplib.ServerStream, error) {
-				err2 := auth.Validate(ctx.Request, "testuser", "", nil, "IPCAM", nonce)
+				err2 := auth.Verify(ctx.Request, "testuser", "", nil, "IPCAM", nonce)
 				if err2 != nil {
 					return &base.Response{ //nolint:nilerr
 						StatusCode: base.StatusUnauthorized,

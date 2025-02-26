@@ -130,7 +130,7 @@ func (m *Metrics) middlewareAuth(ctx *gin.Context) {
 
 	err := m.AuthManager.Authenticate(req)
 	if err != nil {
-		if err.(*auth.Error).AskCredentials { //nolint:errorlint
+		if err.(auth.Error).AskCredentials { //nolint:errorlint
 			ctx.Header("WWW-Authenticate", `Basic realm="mediamtx"`)
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return

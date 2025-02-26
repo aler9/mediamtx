@@ -2,7 +2,6 @@
 package conf
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,7 +18,8 @@ import (
 
 	"github.com/bluenviron/mediamtx/internal/conf/decrypt"
 	"github.com/bluenviron/mediamtx/internal/conf/env"
-	"github.com/bluenviron/mediamtx/internal/conf/yaml"
+	"github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
+	"github.com/bluenviron/mediamtx/internal/conf/yamlwrapper"
 	"github.com/bluenviron/mediamtx/internal/logger"
 )
 
@@ -47,7 +47,7 @@ func firstThatExists(paths []string) string {
 	return ""
 }
 
-func contains(list []auth.ValidateMethod, item auth.ValidateMethod) bool {
+func contains(list []auth.VerifyMethod, item auth.VerifyMethod) bool {
 	for _, i := range list {
 		if i == item {
 			return true
@@ -281,6 +281,7 @@ type Conf struct {
 	WebRTCICEServers2           WebRTCICEServers `json:"webrtcICEServers2"`
 	WebRTCHandshakeTimeout      Duration         `json:"webrtcHandshakeTimeout"`
 	WebRTCTrackGatherTimeout    Duration         `json:"webrtcTrackGatherTimeout"`
+	WebRTCSTUNGatherTimeout     Duration         `json:"webrtcSTUNGatherTimeout"`
 	WebRTCICEUDPMuxAddress      *string          `json:"webrtcICEUDPMuxAddress,omitempty"`  // deprecated
 	WebRTCICETCPMuxAddress      *string          `json:"webrtcICETCPMuxAddress,omitempty"`  // deprecated
 	WebRTCICEHostNAT1To1IPs     *[]string        `json:"webrtcICEHostNAT1To1IPs,omitempty"` // deprecated
@@ -371,7 +372,7 @@ func (conf *Conf) setDefaults() {
 	conf.MulticastRTCPPort = 8003
 	conf.RTSPServerKey = "server.key"
 	conf.RTSPServerCert = "server.crt"
-	conf.RTSPAuthMethods = RTSPAuthMethods{auth.ValidateMethodBasic}
+	conf.RTSPAuthMethods = RTSPAuthMethods{auth.VerifyMethodBasic}
 
 	// RTMP server
 	conf.RTMP = true
@@ -406,6 +407,7 @@ func (conf *Conf) setDefaults() {
 	conf.WebRTCICEServers2 = []WebRTCICEServer{}
 	conf.WebRTCHandshakeTimeout = 10 * Duration(time.Second)
 	conf.WebRTCTrackGatherTimeout = 2 * Duration(time.Second)
+	conf.WebRTCSTUNGatherTimeout = 5 * Duration(time.Second)
 
 	// SRT server
 	conf.SRT = true
@@ -472,7 +474,7 @@ func (conf *Conf) loadFromFile(fpath string, defaultConfPaths []string) (string,
 		}
 	}
 
-	err = yaml.Load(byts, conf)
+	err = yamlwrapper.Unmarshal(byts, conf)
 	if err != nil {
 		return "", err
 	}
@@ -623,7 +625,7 @@ func (conf *Conf) Validate(l logger.Writer) error {
 		l.Log(logger.Warn, "parameter 'authMethods' is deprecated and has been replaced with 'rtspAuthMethods'")
 		conf.RTSPAuthMethods = *conf.AuthMethods
 	}
-	if contains(conf.RTSPAuthMethods, auth.ValidateMethodDigestMD5) {
+	if contains(conf.RTSPAuthMethods, auth.VerifyMethodDigestMD5) {
 		if conf.AuthMethod != AuthMethodInternal {
 			return fmt.Errorf("when RTSP digest is enabled, the only supported auth method is 'internal'")
 		}
@@ -640,6 +642,9 @@ func (conf *Conf) Validate(l logger.Writer) error {
 	if conf.ServerKey != nil {
 		l.Log(logger.Warn, "parameter 'serverKey' is deprecated and has been replaced with 'rtspServerKey'")
 		conf.RTSPServerKey = *conf.ServerKey
+	}
+	if len(conf.RTSPAuthMethods) == 0 {
+		return fmt.Errorf("at least one 'rtspAuthMethods' must be provided")
 	}
 
 	// RTMP
@@ -786,11 +791,8 @@ func (conf *Conf) Validate(l logger.Writer) error {
 // UnmarshalJSON implements json.Unmarshaler.
 func (conf *Conf) UnmarshalJSON(b []byte) error {
 	conf.setDefaults()
-
 	type alias Conf
-	d := json.NewDecoder(bytes.NewReader(b))
-	d.DisallowUnknownFields()
-	return d.Decode((*alias)(conf))
+	return jsonwrapper.Unmarshal(b, (*alias)(conf))
 }
 
 // Global returns the global part of Conf.

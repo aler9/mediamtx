@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/bluenviron/gohlslib/v2"
+	"github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
 )
 
 // HLSVariant is the hlsVariant parameter.
@@ -31,7 +32,7 @@ func (d HLSVariant) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (d *HLSVariant) UnmarshalJSON(b []byte) error {
 	var in string
-	if err := json.Unmarshal(b, &in); err != nil {
+	if err := jsonwrapper.Unmarshal(b, &in); err != nil {
 		return err
 	}
 

@@ -17,7 +17,7 @@ import (
 
 	"github.com/bluenviron/gortsplib/v4"
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
-	"github.com/bluenviron/mediacommon/pkg/formats/mpegts"
+	"github.com/bluenviron/mediacommon/v2/pkg/formats/mpegts"
 	srt "github.com/datarhei/gosrt"
 	"github.com/google/uuid"
 	"github.com/pion/rtp"
@@ -551,7 +551,7 @@ func TestAPIProtocolListGet(t *testing.T) {
 				w := mpegts.NewWriter(bw, []*mpegts.Track{track})
 				require.NoError(t, err)
 
-				err = w.WriteH2642(track, 0, 0, [][]byte{{1}})
+				err = w.WriteH264(track, 0, 0, [][]byte{{1}})
 				require.NoError(t, err)
 
 				err = bw.Flush()
@@ -1055,7 +1055,7 @@ func TestAPIProtocolKick(t *testing.T) {
 				w := mpegts.NewWriter(bw, []*mpegts.Track{track})
 				require.NoError(t, err)
 
-				err = w.WriteH2642(track, 0, 0, [][]byte{{1}})
+				err = w.WriteH264(track, 0, 0, [][]byte{{1}})
 				require.NoError(t, err)
 
 				err = bw.Flush()

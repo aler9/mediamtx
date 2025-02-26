@@ -41,6 +41,7 @@ func TestSource(t *testing.T) {
 		Publish:            true,
 		HandshakeTimeout:   conf.Duration(10 * time.Second),
 		TrackGatherTimeout: conf.Duration(2 * time.Second),
+		STUNGatherTimeout:  conf.Duration(5 * time.Second),
 		OutgoingTracks:     outgoingTracks,
 		Log:                test.NilLogger,
 	}

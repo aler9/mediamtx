@@ -101,15 +101,11 @@ func (s *Stream) BytesSent() uint64 {
 	bytesSent := atomic.LoadUint64(s.bytesSent)
 	if s.rtspStream != nil {
 		stats := s.rtspStream.Stats()
-		if stats != nil {
-			bytesSent += stats.BytesSent
-		}
+		bytesSent += stats.BytesSent
 	}
 	if s.rtspsStream != nil {
 		stats := s.rtspsStream.Stats()
-		if stats != nil {
-			bytesSent += stats.BytesSent
-		}
+		bytesSent += stats.BytesSent
 	}
 	return bytesSent
 }

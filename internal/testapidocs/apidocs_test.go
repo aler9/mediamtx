@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
-	"github.com/bluenviron/mediamtx/internal/conf/yaml"
+	"github.com/bluenviron/mediamtx/internal/conf/yamlwrapper"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +18,7 @@ func TestAPIDocs(t *testing.T) {
 	require.NoError(t, err)
 
 	var raw map[string]interface{}
-	err = yaml.Load(byts, &raw)
+	err = yamlwrapper.Unmarshal(byts, &raw)
 	require.NoError(t, err)
 
 	components := raw["components"].(map[string]interface{})

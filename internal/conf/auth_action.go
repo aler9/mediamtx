@@ -3,6 +3,8 @@ package conf
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
 )
 
 // AuthAction is an authentication action.
@@ -26,7 +28,7 @@ func (d AuthAction) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (d *AuthAction) UnmarshalJSON(b []byte) error {
 	var in string
-	if err := json.Unmarshal(b, &in); err != nil {
+	if err := jsonwrapper.Unmarshal(b, &in); err != nil {
 		return err
 	}
 

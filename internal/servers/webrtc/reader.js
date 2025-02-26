@@ -468,7 +468,13 @@
         return;
       }
 
-      if (this.pc.connectionState === 'failed') {
+      // "closed" can arrive before "failed" and without
+      // the close() method being called at all.
+      // It happens when the other peer sends a termination
+      // message like a DTLS CloseNotify.
+      if (this.pc.connectionState === 'failed'
+        || this.pc.connectionState === 'closed'
+      ) {
         this.handleError('peer connection closed');
       }
     };

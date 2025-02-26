@@ -6,6 +6,8 @@ import (
 	"net"
 	"sort"
 	"strings"
+
+	"github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
 )
 
 // IPNetworks is a parameter that contains a list of IP networks.
@@ -27,7 +29,7 @@ func (d IPNetworks) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (d *IPNetworks) UnmarshalJSON(b []byte) error {
 	var in []string
-	if err := json.Unmarshal(b, &in); err != nil {
+	if err := jsonwrapper.Unmarshal(b, &in); err != nil {
 		return err
 	}
 

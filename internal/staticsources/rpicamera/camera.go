@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bluenviron/mediacommon/pkg/codecs/h264"
+	"github.com/bluenviron/mediacommon/v2/pkg/codecs/h264"
 )
 
 type camera struct {

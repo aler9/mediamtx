@@ -4,8 +4,8 @@
   <br>
   <br>
 
-  [![Test](https://github.com/bluenviron/mediamtx/workflows/test/badge.svg)](https://github.com/bluenviron/mediamtx/actions?query=workflow:test)
-  [![Lint](https://github.com/bluenviron/mediamtx/workflows/lint/badge.svg)](https://github.com/bluenviron/mediamtx/actions?query=workflow:lint)
+  [![Test](https://github.com/bluenviron/mediamtx/workflows/code_test/badge.svg)](https://github.com/bluenviron/mediamtx/actions?query=workflow:code_test)
+  [![Lint](https://github.com/bluenviron/mediamtx/workflows/code_lint/badge.svg)](https://github.com/bluenviron/mediamtx/actions?query=workflow:code_lint)
   [![CodeCov](https://codecov.io/gh/bluenviron/mediamtx/branch/main/graph/badge.svg)](https://app.codecov.io/gh/bluenviron/mediamtx/tree/main)
   [![Release](https://img.shields.io/github/v/release/bluenviron/mediamtx)](https://github.com/bluenviron/mediamtx/releases)
   [![Docker Hub](https://img.shields.io/badge/docker-bluenviron/mediamtx-blue)](https://hub.docker.com/r/bluenviron/mediamtx)

@@ -3,6 +3,8 @@ package conf
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
 )
 
 // Encryption is the rtspEncryption / rtmpEncryption parameter.
@@ -36,7 +38,7 @@ func (d Encryption) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (d *Encryption) UnmarshalJSON(b []byte) error {
 	var in string
-	if err := json.Unmarshal(b, &in); err != nil {
+	if err := jsonwrapper.Unmarshal(b, &in); err != nil {
 		return err
 	}
 

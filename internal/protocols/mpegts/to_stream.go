@@ -7,7 +7,7 @@ import (
 
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
 	"github.com/bluenviron/gortsplib/v4/pkg/format"
-	"github.com/bluenviron/mediacommon/pkg/formats/mpegts"
+	"github.com/bluenviron/mediacommon/v2/pkg/formats/mpegts"
 
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/stream"
@@ -27,7 +27,7 @@ func ToStream(
 	var medias []*description.Media //nolint:prealloc
 	var unsupportedTracks []int
 
-	td := mpegts.NewTimeDecoder2()
+	td := mpegts.NewTimeDecoder()
 
 	for i, track := range r.Tracks() { //nolint:dupl
 		var medi *description.Media

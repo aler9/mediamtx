@@ -36,7 +36,7 @@ func isValidPathName(name string) error {
 	return nil
 }
 
-func srtCheckPassphrase(passphrase string) error {
+func checkSRTPassphrase(passphrase string) error {
 	switch {
 	case len(passphrase) < 10 || len(passphrase) > 79:
 		return fmt.Errorf("must be between 10 and 79 characters")
@@ -44,6 +44,22 @@ func srtCheckPassphrase(passphrase string) error {
 	default:
 		return nil
 	}
+}
+
+func checkRedirect(v string) error {
+	if strings.HasPrefix(v, "/") {
+		err := isValidPathName(v[1:])
+		if err != nil {
+			return fmt.Errorf("'%s': %w", v, err)
+		}
+	} else {
+		_, err := base.ParseURL(v)
+		if err != nil {
+			return fmt.Errorf("'%s' is not a valid RTSP URL", v)
+		}
+	}
+
+	return nil
 }
 
 // FindPathConf returns the configuration corresponding to the given path name.
@@ -295,6 +311,10 @@ func (pconf *Path) validate(
 		return fmt.Errorf("'sourceOnDemand' is useless when source is 'publisher'")
 	}
 
+	if pconf.Source != "redirect" && pconf.SourceRedirect != "" {
+		return fmt.Errorf("'sourceRedirect' is useless when source is not 'redirect'")
+	}
+
 	// source-dependent settings
 
 	switch {
@@ -306,7 +326,7 @@ func (pconf *Path) validate(
 		}
 
 		if pconf.SRTPublishPassphrase != "" {
-			err := srtCheckPassphrase(pconf.SRTPublishPassphrase)
+			err := checkSRTPassphrase(pconf.SRTPublishPassphrase)
 			if err != nil {
 				return fmt.Errorf("invalid 'srtPublishPassphrase': %w", err)
 			}
@@ -387,9 +407,9 @@ func (pconf *Path) validate(
 			return fmt.Errorf("source redirect must be filled")
 		}
 
-		_, err := base.ParseURL(pconf.SourceRedirect)
+		err := checkRedirect(pconf.SourceRedirect)
 		if err != nil {
-			return fmt.Errorf("'%s' is not a valid RTSP URL", pconf.SourceRedirect)
+			return err
 		}
 
 	case pconf.Source == "rpiCamera":
@@ -450,23 +470,16 @@ func (pconf *Path) validate(
 	}
 
 	if pconf.SRTReadPassphrase != "" {
-		err := srtCheckPassphrase(pconf.SRTReadPassphrase)
+		err := checkSRTPassphrase(pconf.SRTReadPassphrase)
 		if err != nil {
 			return fmt.Errorf("invalid 'readRTPassphrase': %w", err)
 		}
 	}
 
 	if pconf.Fallback != "" {
-		if strings.HasPrefix(pconf.Fallback, "/") {
-			err := isValidPathName(pconf.Fallback[1:])
-			if err != nil {
-				return fmt.Errorf("'%s': %w", pconf.Fallback, err)
-			}
-		} else {
-			_, err := base.ParseURL(pconf.Fallback)
-			if err != nil {
-				return fmt.Errorf("'%s' is not a valid RTSP URL", pconf.Fallback)
-			}
+		err := checkRedirect(pconf.Fallback)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -490,8 +503,7 @@ func (pconf *Path) validate(
 		}
 	}
 
-	// avoid overflowing DurationV0 of mvhd
-	if pconf.RecordSegmentDuration > Duration(24*time.Hour) {
+	if pconf.RecordSegmentDuration > Duration(24*time.Hour) { // avoid overflowing DurationV0 of mvhd
 		return fmt.Errorf("maximum segment duration is 1 day")
 	}
 

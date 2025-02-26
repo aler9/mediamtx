@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bluenviron/gortsplib/v4"
+	"github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
 )
 
 // RTSPTransports is the rtspTransports parameter.
@@ -43,7 +44,7 @@ func (d RTSPTransports) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (d *RTSPTransports) UnmarshalJSON(b []byte) error {
 	var in []string
-	if err := json.Unmarshal(b, &in); err != nil {
+	if err := jsonwrapper.Unmarshal(b, &in); err != nil {
 		return err
 	}
 

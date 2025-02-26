@@ -159,7 +159,7 @@ func (s *httpServer) onRequest(ctx *gin.Context) {
 		AccessRequest: req,
 	})
 	if err != nil {
-		var terr *auth.Error
+		var terr auth.Error
 		if errors.As(err, &terr) {
 			if terr.AskCredentials {
 				ctx.Header("WWW-Authenticate", `Basic realm="mediamtx"`)

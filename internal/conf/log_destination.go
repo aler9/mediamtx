@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
 	"github.com/bluenviron/mediamtx/internal/logger"
 )
 
@@ -49,7 +50,7 @@ func (d *LogDestinations) contains(v logger.Destination) bool {
 // UnmarshalJSON implements json.Unmarshaler.
 func (d *LogDestinations) UnmarshalJSON(b []byte) error {
 	var in []string
-	if err := json.Unmarshal(b, &in); err != nil {
+	if err := jsonwrapper.Unmarshal(b, &in); err != nil {
 		return err
 	}
 

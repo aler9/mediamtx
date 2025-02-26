@@ -390,6 +390,8 @@ webrtcICEServers2: []
 webrtcHandshakeTimeout: 10s
 # Maximum time to gather video tracks.
 webrtcTrackGatherTimeout: 2s
+# The maximum time to gather STUN candidates.
+webrtcSTUNGatherTimeout: 5s
 
 ###############################################
 # Global settings -> SRT server
@@ -505,7 +507,8 @@ pathDefaults:
   ###############################################
   # Default path settings -> Redirect source (when source is "redirect")
 
-  # RTSP URL which clients will be redirected to.
+  # path which clients will be redirected to.
+  # It can be can be a relative path (i.e. /otherstream) or an absolute RTSP URL.
   sourceRedirect:
 
   ###############################################

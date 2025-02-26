@@ -3,8 +3,8 @@ package playback
 import (
 	"io"
 
-	"github.com/bluenviron/mediacommon/pkg/formats/fmp4"
-	"github.com/bluenviron/mediacommon/pkg/formats/pmp4"
+	"github.com/bluenviron/mediacommon/v2/pkg/formats/fmp4"
+	"github.com/bluenviron/mediacommon/v2/pkg/formats/pmp4"
 )
 
 type muxerMP4Track struct {

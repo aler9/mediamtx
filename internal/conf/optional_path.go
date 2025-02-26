@@ -1,12 +1,12 @@
 package conf
 
 import (
-	"bytes"
 	"encoding/json"
 	"reflect"
 	"strings"
 
 	"github.com/bluenviron/mediamtx/internal/conf/env"
+	"github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
 )
 
 var optionalPathValuesType = func() reflect.Type {
@@ -51,9 +51,7 @@ type OptionalPath struct {
 // UnmarshalJSON implements json.Unmarshaler.
 func (p *OptionalPath) UnmarshalJSON(b []byte) error {
 	p.Values = newOptionalPathValues()
-	d := json.NewDecoder(bytes.NewReader(b))
-	d.DisallowUnknownFields()
-	return d.Decode(p.Values)
+	return jsonwrapper.Unmarshal(b, p.Values)
 }
 
 // UnmarshalEnv implements env.Unmarshaler.

@@ -1,5 +1,5 @@
-// Package yaml contains a yaml loader.
-package yaml
+// Package yamlwrapper contains a YAML unmarshaler.
+package yamlwrapper
 
 import (
 	"encoding/json"
@@ -41,8 +41,8 @@ func convertKeys(i interface{}) (interface{}, error) {
 	return i, nil
 }
 
-// Load loads the configuration from Yaml.
-func Load(buf []byte, dest interface{}) error {
+// Unmarshal loads the configuration from YAML.
+func Unmarshal(buf []byte, dest interface{}) error {
 	// load YAML into a generic map
 	// from documentation:
 	// "UnmarshalStrict is like Unmarshal except that any fields that are found in the data

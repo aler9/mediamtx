@@ -1,6 +1,6 @@
 package playback
 
-import "github.com/bluenviron/mediacommon/pkg/formats/fmp4"
+import "github.com/bluenviron/mediacommon/v2/pkg/formats/fmp4"
 
 type muxer interface {
 	writeInit(init *fmp4.Init)

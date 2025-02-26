@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
-	"github.com/bluenviron/mediacommon/pkg/formats/mpegts"
+	"github.com/bluenviron/mediacommon/v2/pkg/formats/mpegts"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
@@ -116,7 +116,7 @@ func TestServerPublish(t *testing.T) {
 	w := mpegts.NewWriter(bw, []*mpegts.Track{track})
 	require.NoError(t, err)
 
-	err = w.WriteH2642(track, 0, 0, [][]byte{
+	err = w.WriteH264(track, 0, 0, [][]byte{
 		test.FormatH264.SPS,
 		test.FormatH264.PPS,
 		{0x05, 1}, // IDR
@@ -149,7 +149,7 @@ func TestServerPublish(t *testing.T) {
 	path.stream.StartReader(reader)
 	defer path.stream.RemoveReader(reader)
 
-	err = w.WriteH2642(track, 0, 0, [][]byte{
+	err = w.WriteH264(track, 0, 0, [][]byte{
 		{5, 2},
 	})
 	require.NoError(t, err)

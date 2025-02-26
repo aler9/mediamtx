@@ -190,6 +190,7 @@ type Server struct {
 	ICEServers            []conf.WebRTCICEServer
 	HandshakeTimeout      conf.Duration
 	TrackGatherTimeout    conf.Duration
+	STUNGatherTimeout     conf.Duration
 	ExternalCmdPool       *externalcmd.Pool
 	PathManager           serverPathManager
 	Parent                serverParent

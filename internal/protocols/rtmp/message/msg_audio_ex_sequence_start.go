@@ -3,7 +3,7 @@ package message
 import (
 	"fmt"
 
-	"github.com/bluenviron/mediacommon/pkg/codecs/mpeg4audio"
+	"github.com/bluenviron/mediacommon/v2/pkg/codecs/mpeg4audio"
 	"github.com/bluenviron/mediamtx/internal/protocols/rtmp/rawmessage"
 )
 

@@ -60,7 +60,7 @@ type serverParent interface {
 // Server is a RTSP server.
 type Server struct {
 	Address             string
-	AuthMethods         []auth.ValidateMethod
+	AuthMethods         []auth.VerifyMethod
 	ReadTimeout         conf.Duration
 	WriteTimeout        conf.Duration
 	WriteQueueSize      int
@@ -106,6 +106,7 @@ func (s *Server) Initialize() error {
 		WriteTimeout:   time.Duration(s.WriteTimeout),
 		WriteQueueSize: s.WriteQueueSize,
 		RTSPAddress:    s.Address,
+		AuthMethods:    s.AuthMethods,
 	}
 
 	if s.UseUDP {
@@ -337,10 +338,7 @@ func (s *Server) findSessionByUUID(uuid uuid.UUID) (*gortsplib.ServerSession, *s
 	return nil, nil
 }
 
-func (s *Server) findSessionByRSession(rsession *gortsplib.ServerSession) *session {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
+func (s *Server) findSessionByRSessionUnsafe(rsession *gortsplib.ServerSession) *session {
 	return s.sessions[rsession]
 }
 

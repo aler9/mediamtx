@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/bluenviron/mediacommon/pkg/codecs/mpeg4audio"
-	"github.com/bluenviron/mediacommon/pkg/formats/mpegts"
+	"github.com/bluenviron/mediacommon/v2/pkg/codecs/mpeg4audio"
+	"github.com/bluenviron/mediacommon/v2/pkg/formats/mpegts"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 
@@ -63,7 +63,7 @@ func TestSource(t *testing.T) {
 		err := w.WriteMPEG4Audio(track2, 1*90000, [][]byte{{1, 2, 3, 4}})
 		require.NoError(t, err)
 
-		err = w.WriteH2642(track1, 2*90000, 2*90000, [][]byte{
+		err = w.WriteH264(track1, 2*90000, 2*90000, [][]byte{
 			{7, 1, 2, 3}, // SPS
 			{8},          // PPS
 		})

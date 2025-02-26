@@ -1,6 +1,6 @@
 package conf
 
-import "encoding/json"
+import "github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
 
 // WebRTCICEServer is a WebRTC ICE Server.
 type WebRTCICEServer struct {
@@ -18,5 +18,5 @@ func (s *WebRTCICEServers) UnmarshalJSON(b []byte) error {
 	// remove default value before loading new value
 	// https://github.com/golang/go/issues/21092
 	*s = nil
-	return json.Unmarshal(b, (*[]WebRTCICEServer)(s))
+	return jsonwrapper.Unmarshal(b, (*[]WebRTCICEServer)(s))
 }

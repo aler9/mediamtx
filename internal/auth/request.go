@@ -37,20 +37,17 @@ const (
 
 // Request is an authentication request.
 type Request struct {
-	User   string
-	Pass   string
-	IP     net.IP
-	Action conf.AuthAction
+	User             string
+	Pass             string
+	IP               net.IP
+	Action           conf.AuthAction
+	CustomVerifyFunc func(expectedUser string, expectedPass string) bool
 
 	// only for ActionPublish, ActionRead, ActionPlayback
 	Path     string
 	Protocol Protocol
 	ID       *uuid.UUID
 	Query    string
-
-	// RTSP only
-	RTSPRequest *base.Request
-	RTSPNonce   string
 }
 
 // FillFromRTSPRequest fills User and Pass from a RTSP request.
@@ -58,11 +55,9 @@ func (r *Request) FillFromRTSPRequest(rt *base.Request) {
 	var rtspAuthHeader headers.Authorization
 	err := rtspAuthHeader.Unmarshal(rt.Header["Authorization"])
 	if err == nil {
+		r.User = rtspAuthHeader.Username
 		if rtspAuthHeader.Method == headers.AuthMethodBasic {
-			r.User = rtspAuthHeader.BasicUser
 			r.Pass = rtspAuthHeader.BasicPass
-		} else {
-			r.User = rtspAuthHeader.Username
 		}
 	}
 }

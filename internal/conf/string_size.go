@@ -1,9 +1,8 @@
 package conf
 
 import (
-	"encoding/json"
-
 	"code.cloudfoundry.org/bytefmt"
+	"github.com/bluenviron/mediamtx/internal/conf/jsonwrapper"
 )
 
 // StringSize is a size that is unmarshaled from a string.
@@ -17,7 +16,7 @@ func (s StringSize) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (s *StringSize) UnmarshalJSON(b []byte) error {
 	var in string
-	if err := json.Unmarshal(b, &in); err != nil {
+	if err := jsonwrapper.Unmarshal(b, &in); err != nil {
 		return err
 	}
 

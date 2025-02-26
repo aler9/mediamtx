@@ -10,6 +10,7 @@ import (
 
 	"github.com/bluenviron/gortsplib/v4"
 	"github.com/bluenviron/gortsplib/v4/pkg/base"
+	"github.com/bluenviron/gortsplib/v4/pkg/description"
 	"github.com/google/uuid"
 	"github.com/pion/rtp"
 
@@ -250,7 +251,23 @@ func (s *session) onPlay(_ *gortsplib.ServerHandlerOnPlayCtx) (*base.Response, e
 		s.state = gortsplib.ServerSessionStatePlay
 		s.transport = s.rsession.SetuppedTransport()
 		s.mutex.Unlock()
-	}
+
+		if len(s.stream.CachedUnits) > 0 {
+			lastTimestamp := s.stream.CachedUnits[len(s.stream.CachedUnits)-1].GetRTPPackets()[0].Timestamp
+			for _, medi := range s.stream.Desc().Medias {
+				if medi.Type == description.MediaTypeVideo {
+					for _, u := range s.stream.CachedUnits {
+						for _, pkt := range u.GetRTPPackets() {
+							pkt.Timestamp = lastTimestamp
+							err := s.rsession.WritePacketRTP(medi, pkt)
+							if err != nil {
+								break
+							}
+						}
+					}
+				}
+			}
+		}
 
 	return &base.Response{
 		StatusCode: base.StatusOK,

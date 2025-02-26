@@ -59,6 +59,7 @@ type pathManager struct {
 	pathConfs         map[string]*conf.Path
 	externalCmdPool   *externalcmd.Pool
 	parent            pathManagerParent
+	gopCache          bool
 
 	ctx         context.Context
 	ctxCancel   func()
@@ -352,6 +353,7 @@ func (pm *pathManager) createPath(
 		wg:                &pm.wg,
 		externalCmdPool:   pm.externalCmdPool,
 		parent:            pm,
+		gopCache:          pm.gopCache,
 	}
 	pa.initialize()
 

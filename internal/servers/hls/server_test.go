@@ -160,6 +160,7 @@ func TestServerRead(t *testing.T) {
 			desc,
 			true,
 			test.NilLogger,
+			false,
 		)
 		require.NoError(t, err)
 
@@ -259,6 +260,7 @@ func TestServerRead(t *testing.T) {
 			desc,
 			true,
 			test.NilLogger,
+			false,
 		)
 		require.NoError(t, err)
 
@@ -363,6 +365,7 @@ func TestDirectory(t *testing.T) {
 		desc,
 		true,
 		test.NilLogger,
+		false,
 	)
 	require.NoError(t, err)
 
